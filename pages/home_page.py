@@ -19,10 +19,20 @@ class HomePage(BasePage, HomePageLocators):
 
     @allure.step('Открыть FAQ  #{index}')
     def open_faq_and_check(self, index: int):
+        from selenium.webdriver.support.ui import WebDriverWait as _WW
+        from selenium.webdriver.support import expected_conditions as EC
         self.wait.until(EC.presence_of_all_elements_located(self.FAQ_BUTTONS))
         buttons = self.driver.find_elements(*self.FAQ_BUTTONS)
         self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", buttons[index])
-        self.driver.execute_script("arguments[0].click();", buttons[index])
+        # ждём, пока кнопка с нужным индексом станет кликабельной, затем кликаем напрямую
+        _WW(self.driver, 10).until(
+            lambda d: d.find_elements(*self.FAQ_BUTTONS)[index].is_displayed()
+            and d.find_elements(*self.FAQ_BUTTONS)[index].is_enabled()
+        )
+        try:
+            buttons[index].click()
+        except Exception:
+            self.driver.execute_script("arguments[0].click();", buttons[index])
         panels = self.driver.find_elements(*self.FAQ_PANELS)
         return panels[index].get_attribute("hidden") is None
 

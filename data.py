@@ -1,5 +1,7 @@
 BASE_URL = "https://qa-scooter.education-services.ru/"
 
+FAQ_INDICES = list(range(8))
+
 ORDER_DATA = [
     {
         "name": "Иван",

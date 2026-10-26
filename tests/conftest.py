@@ -31,4 +31,4 @@ def wait(home_page):
     """Короткий wait для явных ожиданий."""
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as ec
-    return WebDriverWait(home_page.driver, 15)
+    return WebDriverWait(home_page.driver, 10)
