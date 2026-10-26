@@ -21,6 +21,5 @@ Allure-отчёт генерируется в `allure_results/`, собирае�
 ```bash
 pytest tests/test_scooter.py --alluredir=allure_results
 allure generate allure_results -o allure_report --clean
-git add allure_report/ && git commit -m "update allure report"
 ```
 
