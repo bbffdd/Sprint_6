@@ -9,4 +9,4 @@ venv/
 allure_results/
 .DS_Store
 Thumbs.db
-allure-results/
+allure-report/

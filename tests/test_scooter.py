@@ -1,64 +1,80 @@
-import pytest
 import allure
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from pages.home_page import HomePage
-from locators.home_page_locators import HomePageLocators
+import pytest
+
 import data as app_data
+from pages.home_page import HomePage
+from pages.order_page import OrderPage
 
 
 @allure.feature("FAQ")
 class TestFAQ:
-    """Тесты «Часто задаваемых вопросов». Параметризован по индексу."""
-
-    @pytest.mark.parametrize("idx", app_data.FAQ_INDICES, ids=[f"q{i}" for i in app_data.FAQ_INDICES])
+    @pytest.mark.parametrize(
+        "idx",
+        app_data.FAQ_INDICES,
+        ids=[f"q{i}" for i in app_data.FAQ_INDICES],
+    )
     @allure.story("Раскрытие вопроса FAQ")
-    @allure.severity(allure.severity_level.BLOCKER)
-    @allure.description("Проверяет, что вопрос FAQ с индексом {idx} раскрывается по клику.")
     def test_faq_question_opens(self, home_page: HomePage, idx: int):
-        assert home_page.open_faq_and_check(idx), f"FAQ-вопрос {idx} не раскрыт"
+        assert home_page.open_faq_and_check(idx), (
+            f"FAQ-вопрос {idx} не раскрылся"
+        )
 
 
 @allure.feature("Заказ самоката")
 class TestOrder:
-    """Тесты позитивного сценария заказа самоката."""
-
-    @pytest.mark.parametrize("data", app_data.ORDER_DATA, ids=["ivanov", "petrova", "sidorov"])
+    @pytest.mark.parametrize(
+        "entry_point",
+        ["header", "bottom"],
+        ids=["header-button", "bottom-button"],
+    )
+    @pytest.mark.parametrize(
+        "order_data",
+        app_data.ORDER_DATA,
+        ids=["first-data-set", "second-data-set"],
+    )
     @allure.story("Позитивный сценарий заказа")
-    @allure.severity(allure.severity_level.BLOCKER)
-    @allure.description("Заполняется форма заказа с разными данными, проверяется появление модалки подтверждения.")
-    def test_order_success(self, home_page: HomePage, data: dict):
-        home_page.order_scooter(data)
+    def test_order_success(
+        self,
+        home_page: HomePage,
+        order_page: OrderPage,
+        order_data: dict,
+        entry_point: str,
+    ):
+        home_page.click_order_button(entry_point)
 
-    @allure.story("Навигация по логотипам")
-    @allure.severity(allure.severity_level.MINOR)
-    @allure.description("Если нажать на логотип «Самоката», попадёшь на главную страницу «Самоката».")
+        order_page.fill_step_1(order_data)
+        order_page.go_to_step_2()
+        order_page.fill_step_2(order_data)
+        order_page.submit_order()
+        order_page.wait_for_confirmation()
+        order_page.confirm_order()
+
+        success_message = order_page.get_success_message()
+        assert "Заказ оформлен" in success_message, (
+            f"Не появилось сообщение об успешном оформлении заказа: "
+            f"{success_message}"
+        )
+
+
+
+@allure.feature("Навигация по логотипам")
+class TestLogos:
+    @allure.story("Логотип Самоката ведёт на главную")
     def test_scooter_logo_navigates_home(self, home_page: HomePage):
-        href = home_page.click_scooter_logo()
-        assert href and HomePageLocators.SCOOTER_HOME_URL in href, f"Логотип ведёт не на главную: {href}"
-        assert HomePageLocators.SCOOTER_HOME_URL in home_page.driver.current_url, (
-            f"После клика URL: {home_page.driver.current_url}"
+        actual_url = home_page.click_scooter_logo()
+
+        assert actual_url.rstrip("/") == app_data.BASE_URL.rstrip("/"), (
+            f"После клика по логотипу открылась неверная страница: {actual_url}"
         )
 
-    @allure.story("Навигация по логотипам")
-    @allure.severity(allure.severity_level.MINOR)
-    @allure.description("Если нажать на логотип Яндекса, в новом окне через редирект откроется главная страница Яндекса.")
-    def test_yandex_logo_opens_new_window(self, home_page: HomePage):
-        new_handle = home_page.click_yandex_logo()
-        home_page.driver.switch_to.window(new_handle)
-        home_page.wait.until(EC.url_contains("ya.ru"))
-        assert home_page.driver.current_url.startswith("https://ya.ru"), (
-            f"Новая вкладка не ведёт на Яндекс. URL: {home_page.driver.current_url}"
-        )
-        home_page.driver.switch_to.window(home_page.driver.window_handles[0])
+    @allure.story("Логотип Яндекса открывает главную страницу Дзена")
+    def test_yandex_logo_opens_dzen(self, home_page: HomePage):
+        new_window_url = home_page.click_yandex_logo()
 
-    @allure.story("Навигация по логотипам")
-    @allure.severity(allure.severity_level.MINOR)
-    @allure.description("Проверяет alt-атрибут изображения внутри логотипа Яндекса.")
+        assert "ya.ru" in new_window_url, (
+            f"Новое окно не ведёт на Дзен: {new_window_url}"
+        )
+
+    @allure.story("У логотипа Яндекса корректный alt")
     def test_yandex_logo_text(self, home_page: HomePage):
-        """Проверяем, что логотип Яндекса содержит alt='Yandex'."""
-        logo = home_page.wait.until(EC.visibility_of_element_located(
-            (By.CSS_SELECTOR, "a[class*='LogoYandex']")
-        ))
-        # лямбда: условие зависит от драйвера, проверяем alt у вложенного img
-        home_page.wait.until(lambda _: logo.find_element(By.TAG_NAME, "img").get_attribute("alt") == "Yandex")
+        assert home_page.get_yandex_logo_alt() == "Yandex"

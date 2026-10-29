@@ -1,87 +1,89 @@
 import allure
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 
-from pages.base_page import BasePage
 from locators.order_page_locators import OrderPageLocators
+from pages.base_page import BasePage
 
 
-class OrderPage(BasePage, OrderPageLocators):
-    """PO для страницы-формы заказа самоката."""
+class OrderPage(BasePage):
+    """Page Object страницы оформления заказа."""
 
-    def __init__(self, driver):
-        BasePage.__init__(self, driver)
-        self.loc = OrderPageLocators()
+    @allure.step("Заполнить шаг 1")
+    def fill_step_1(self, data: dict):
+        for key, locator in OrderPageLocators.STEP1_FIELDS.items():
+            self._type(locator, data[key])
 
-    # ----- Шаги -----
+        self.select_metro_station(data["metro"])
 
-    @allure.step('Заполнить форму заказа')
-    def order_step(self, data: dict):
-        self.fill_step1(data)
-        self.click_next()
-        self.fill_step2(data)
-        self.click_submit()
+    @allure.step("Выбрать станцию метро: {station}")
+    def select_metro_station(self, station: str):
+        self._click(OrderPageLocators.STEP_1_METRO_INPUT)
+        self._wait_visible(
+            OrderPageLocators.STEP_1_METRO_OPTIONS_LIST
+        )
+        self._click_text(
+            OrderPageLocators.STEP_1_METRO_OPTIONS,
+            station,
+        )
 
-    @allure.step('Заполнить этап 1, пользовательские данные')
-    def fill_step1(self, data: dict):
-        self.wait.until(EC.visibility_of_element_located(self.STEP1_FORM))
-        self.wait.until(EC.presence_of_all_elements_located(self.STEP1_INPUTS))
-        inputs = self.driver.find_elements(*self.STEP1_INPUTS)
-        for inp in inputs:
-            ph = inp.get_attribute("placeholder")
-            key = self.STEP1_PLACEHOLDERS.get(ph)
-            if key and key in data:
-                inp.send_keys(data[key])
+    @allure.step("Перейти к шагу 2")
+    def go_to_step_2(self):
+        self._click(OrderPageLocators.NEXT_BUTTON)
 
-        self.wait.until(EC.element_to_be_clickable(self.METRO_INPUT)).click()
-        self.wait.until(EC.visibility_of_element_located(self.METRO_OPTIONS_LIST))
-        self.wait.until(EC.element_to_be_clickable(self.METRO_FIRST_OPTION)).click()
+    @allure.step("Выбрать первую доступную дату")
+    def select_date(self):
+        self._click(OrderPageLocators.STEP_2_DATE_INPUT)
+        self._click_index(
+            OrderPageLocators.STEP_2_DATEPICKER_DAYS,
+            0,
+        )
+        self._wait_invisible(
+            OrderPageLocators.STEP_2_DATEPICKER_OVERLAY
+        )
 
-    @allure.step('Клик Далее ')
-    def click_next(self):
-        self.wait.until(EC.element_to_be_clickable(self.NEXT_BUTTON)).click()
-        return self
+    @allure.step("Выбрать срок аренды: {duration}")
+    def select_duration(self, duration: str):
+        self._click(OrderPageLocators.STEP_2_DURATION_DROPDOWN)
+        self._click_text(
+            OrderPageLocators.STEP_2_DURATION_OPTIONS,
+            duration,
+        )
 
-    @allure.step('Заполнить этап 2, параметры аренды')
-    def fill_step2(self, data: dict):
-        date_inp = self.wait.until(EC.element_to_be_clickable(self.DATE_INPUT))
-        date_inp.click()
-        self.wait.until(EC.element_to_be_clickable(self.DATEPICKER_DAYS)).click()
-        try:
-            self.wait.until(EC.invisibility_of_element_located(self.DATEPICKER_OVERLAY))
-        except Exception:
-            pass
+    @allure.step("Выбрать цвет самоката: {color}")
+    def select_color(self, color: str):
+        locator = OrderPageLocators.STEP_2_COLOR_OPTIONS.get(color)
+        if locator is None:
+            raise ValueError(f"Неизвестный цвет самоката: {color}")
 
-        dropdown = self.wait.until(EC.element_to_be_clickable(self.DURATION_DROPDOWN))
-        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", dropdown)
-        dropdown.click()
-        self.wait.until(EC.element_to_be_clickable(self.DURATION_OPTIONS)).click()
+        self._click(locator)
 
-        if data.get("color"):
-            label_text = self.COLOR_LABEL_TEXT.get(data["color"])
-            if label_text:
-                label = self.wait.until(
-                    EC.element_to_be_clickable((By.XPATH, f"//label[contains(normalize-space(.), '{label_text}')]"))
-                )
-                label.click()
+    @allure.step("Заполнить шаг 2")
+    def fill_step_2(self, data: dict):
+        self.select_date()
+        self.select_duration(data["duration"])
+        self.select_color(data["color"])
+        self._type(
+            OrderPageLocators.STEP_2_COMMENT_INPUT,
+            data.get("comment", ""),
+        )
 
-        comment = self.wait.until(EC.element_to_be_clickable(self.COMMENT_INPUT))
-        comment.send_keys(data.get("comment", ""))
+    @allure.step("Отправить заказ")
+    def submit_order(self):
+        self._click(OrderPageLocators.STEP_2_SUBMIT_BUTTON)
 
-    @allure.step('Подтвердить заказ отправки заполненных форм заказа')
-    def click_submit(self):
-        self.wait.until(EC.element_to_be_clickable(self.SUBMIT_BUTTON)).click()
+    @allure.step("Дождаться окна подтверждения")
+    def wait_for_confirmation(self):
+        self._wait_visible(
+            OrderPageLocators.STEP_3_CONFIRM_DIALOG
+        )
 
-    # ----- Диалоги -----
+    @allure.step("Подтвердить заказ")
+    def confirm_order(self):
+        self._click(
+            OrderPageLocators.STEP_3_CONFIRM_YES_BUTTON
+        )
 
-    @allure.step('Убедиться, что пришло окно подтверждения регистрации заказа')
-    def wait_for_confirm_dialog(self):
-        self.wait.until(EC.visibility_of_element_located(self.CONFIRM_DIALOG))
-        return self.driver.find_element(*self.CONFIRM_DIALOG)
-
-    @allure.step('Подтвердить заказ')
-    def accept_confirmation(self):
-        self.wait.until(EC.element_to_be_clickable(self.CONFIRM_YES_BUTTON)).click()
-        success_xpath = f"//*[contains(normalize-space(.), '{OrderPage.SUCCESS_TEXT}')]"
-        self.wait.until(EC.visibility_of_element_located((By.XPATH, success_xpath)))
-        return self.driver.find_element(*self.CONFIRM_DIALOG).text
+    @allure.step("Получить сообщение об успешном оформлении заказа")
+    def get_success_message(self) -> str:
+        return self.get_text(
+            OrderPageLocators.STEP_3_SUCCESS_MESSAGE
+        )

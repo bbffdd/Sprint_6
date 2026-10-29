@@ -2,37 +2,97 @@ from selenium.webdriver.common.by import By
 
 
 class OrderPageLocators:
+    NEXT_BUTTON = (
+        By.XPATH,
+        "//button[contains(normalize-space(.), 'Далее')]",
+    )
 
     # Шаг 1 заказа
-    STEP1_FORM = (By.CSS_SELECTOR, "[class*='Order_Form']")
-    STEP1_INPUTS = (By.CSS_SELECTOR, "[class*='Order_Form'] input")
-    STEP1_PLACEHOLDERS = {
-        "* Имя": "name",
-        "* Фамилия": "surname",
-        "* Адрес: куда привезти заказ": "address",
-        "* Станция метро": "metro",
-        "* Телефон: на него позвонит курьер": "phone",
+    STEP1_FIELDS = {
+        "name": (
+            By.CSS_SELECTOR,
+            'input[placeholder="* Имя"]',
+        ),
+        "surname": (
+            By.CSS_SELECTOR,
+            'input[placeholder="* Фамилия"]',
+        ),
+        "address": (
+            By.CSS_SELECTOR,
+            'input[placeholder="* Адрес: куда привезти заказ"]',
+        ),
+        "phone": (
+            By.CSS_SELECTOR,
+            'input[placeholder="* Телефон: на него позвонит курьер"]',
+        ),
     }
-    METRO_INPUT = (By.CSS_SELECTOR, 'input[placeholder="* Станция метро"]')
-    METRO_OPTIONS_LIST = (By.CSS_SELECTOR, ".select-search__options")
-    METRO_FIRST_OPTION = (By.CSS_SELECTOR, ".select-search__option")
+
+    STEP_1_METRO_INPUT = (
+        By.CSS_SELECTOR,
+        'input[placeholder="* Станция метро"]',
+    )
+    STEP_1_METRO_OPTIONS_LIST = (
+        By.CSS_SELECTOR,
+        ".select-search__options",
+    )
+    STEP_1_METRO_OPTIONS = (
+        By.CSS_SELECTOR,
+        ".select-search__option",
+    )
 
     # Шаг 2 заказа
-    DATE_INPUT = (By.CSS_SELECTOR, ".react-datepicker__input-container input")
-    DATEPICKER_DAYS = (By.CSS_SELECTOR, ".react-datepicker__day")
-    DATEPICKER_OVERLAY = (By.CSS_SELECTOR, ".react-datepicker")
-    DURATION_DROPDOWN = (By.CSS_SELECTOR, ".Dropdown-control")
-    DURATION_OPTIONS = (By.CSS_SELECTOR, ".Dropdown-option")
-    COMMENT_INPUT = (By.CSS_SELECTOR, 'input[placeholder="Комментарий для курьера"]')
-    NEXT_BUTTON = (By.XPATH, "//button[contains(normalize-space(.), 'Далее')]")
-    SUBMIT_BUTTON = (By.XPATH, "//button[contains(@class, 'Button_Middle') and contains(normalize-space(.), 'Заказать')]")
-
-    # Окно подтверждения
-    CONFIRM_DIALOG = (By.CSS_SELECTOR, "[class*='Modal']")
-    CONFIRM_YES_BUTTON = (By.XPATH, "//button[contains(normalize-space(.), 'Да')]")
-    SUCCESS_TEXT = "Заказ оформлен"
-
-    COLOR_LABEL_TEXT = {
-        "black": "чёрный жемчуг",
-        "grey": "серая безысходность",
+    STEP_2_DATE_INPUT = (
+        By.CSS_SELECTOR,
+        ".react-datepicker__input-container input",
+    )
+    STEP_2_DATEPICKER_DAYS = (
+        By.CSS_SELECTOR,
+        ".react-datepicker__day:not(.react-datepicker__day--disabled):"
+        "not(.react-datepicker__day--outside-month)",
+    )
+    STEP_2_DATEPICKER_OVERLAY = (
+        By.CSS_SELECTOR,
+        ".react-datepicker",
+    )
+    STEP_2_DURATION_DROPDOWN = (
+        By.CSS_SELECTOR,
+        ".Dropdown-control",
+    )
+    STEP_2_DURATION_OPTIONS = (
+        By.CSS_SELECTOR,
+        ".Dropdown-option",
+    )
+    STEP_2_COMMENT_INPUT = (
+        By.CSS_SELECTOR,
+        'input[placeholder="Комментарий для курьера"]',
+    )
+    STEP_2_SUBMIT_BUTTON = (
+        By.XPATH,
+        "//button[contains(@class, 'Button_Middle') "
+        "and contains(normalize-space(.), 'Заказать')]",
+    )
+    STEP_2_COLOR_OPTIONS = {
+        "black": (
+            By.XPATH,
+            "//label[contains(normalize-space(.), 'чёрный жемчуг')]",
+        ),
+        "grey": (
+            By.XPATH,
+            "//label[contains(normalize-space(.), 'серая безысходность')]",
+        ),
     }
+
+    # Шаг 3 — окно подтверждения
+    STEP_3_CONFIRM_DIALOG = (
+        By.CSS_SELECTOR,
+        "[class*='Modal']",
+    )
+    STEP_3_CONFIRM_YES_BUTTON = (
+        By.XPATH,
+        "//button[contains(normalize-space(.), 'Да')]",
+    )
+    STEP_3_SUCCESS_MESSAGE = (
+        By.XPATH,
+        "//*[contains(normalize-space(.), 'Заказ оформлен')]",
+    )
+    STEP_3_SUCCESS_TEXT = "Заказ оформлен"
