@@ -1,0 +1,1 @@
+{"uuid": "55c3d1b8-9112-4b9b-aa90-78adf0456bee", "befores": [{"name": "missing_field", "status": "passed", "start": 1794062607006, "stop": 1794062607006}], "afters": [{"name": "missing_field::<lambda>", "start": 1794062607038}], "start": 1794062607006, "stop": 1794062607038}
